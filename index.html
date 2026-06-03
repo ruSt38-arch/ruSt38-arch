@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Карточки с вечно переливающейся кнопкой</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: url('https://i.ytimg.com/vi/NusNXZYVZHM/maxresdefault.jpg');
+            background-size: cover;
+            background-attachment: fixed;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            padding: 50px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+
+        /* Панель поиска */
+        .search-container {
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+        }
+        #searchInput {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 1rem;
+            border-radius: 40px;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(4px);
+            color: white;
+            text-align: center;
+            outline: none;
+            transition: 0.2s;
+        }
+        #searchInput::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        #searchInput:focus {
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.5);
+        }
+
+        /* Сетка карточек */
+        .cards-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            max-width: 1820px;
+            margin: 0 auto;
+        }
+
+        .glass-card {
+            background: rgba(10, 25, 60, 0.75);
+            backdrop-filter: blur(8px);
+            border-radius: 32px;
+            padding: 28px 24px;
+            width: 340px;
+            height: 525px;
+            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #f0f4ff;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            transition: transform 0.25s ease, box-shadow 0.25s;
+            overflow-y: auto;
+        }
+
+        .glass-card::-webkit-scrollbar {
+            width: 6px;
+        }
+        .glass-card::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        .glass-card::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 10px;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 28px 40px -12px rgba(0, 0, 0, 0.4);
+        }
+
+        .glass-card h3 {
+            font-size: 1.8rem;
+            font-weight: 300;
+            letter-spacing: -0.02em;
+        }
+
+        .glass-card p {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            opacity: 0.9;
+        }
+
+        .gallery-mini {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 8px 0;
+        }
+
+        .gallery-mini img {
+            width: 52px;
+            height: 52px;
+            object-fit: contain;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            padding: 6px;
+            transition: transform 0.2s;
+            cursor: help;
+        }
+
+        .gallery-mini img:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .item-count {
+            font-size: 0.8rem;
+            background: rgba(0,0,0,0.5);
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            width: fit-content;
+            margin: 5px 0;
+        }
+
+        .rainbow-btn {
+            background: linear-gradient(270deg, #3b82f6, #06b6d4, #22c55e, #8b5cf6, #3b82f6);
+            background-size: 400% 400%;
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 12px 20px;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: auto;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            animation: gradientShift 4s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .rainbow-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .rainbow-btn:active {
+            transform: scale(0.98);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #10b981;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        @media (max-width: 800px) {
+            .cards-grid {
+                gap: 20px;
+            }
+            .glass-card {
+                width: 100%;
+                max-width: 340px;
+                height: auto;
+                min-height: 440px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="search-container">
+    <input type="text" id="searchInput" placeholder="🔍 Поиск карточек по названию или описанию...">
+</div>
+
+<div class="cards-grid" id="cardsGrid">
+    <!-- КАРТОЧКА 1 -->
+    <div class="glass-card">
+        <h3>Автолокер с калашом</h3>
+        <p>Чтобы применить фильтр зайдите в промышленный конвеер зажмите shift и нажмите вставить (json)</p>
+        <div class="gallery-mini">
+            <img src="https://static.wikia.nocookie.net/play-rust/images/1/1f/Metal_Facemask_icon.png/revision/latest?cb=20151106061432" alt="metal.facemask">
+            <img src="https://irust.ru/web/items/metal.plate.torso.png" alt="metal.plate.torso">
+            <img src="https://irust.ru/web/items/roadsign.kilt.png" alt="roadsign.kilt">
+            <img src="https://irust.ru/web/items/pants.png" alt="pants">
+            <img src="https://irust.ru/web/items/tactical.gloves.png" alt="tactical.gloves">
+            <img src="https://irust.ru/web/items/shoes.boots.png" alt="shoes.boots">
+            <img src="https://irust.ru/web/items/hoodie.png" alt="hoodie">
+            <img src="https://irust.ru/web/items/rifle.ak.png" alt="rifle.ak">
+            <img src="https://irust.ru/web/items/ammo.rifle.incendiary.png" alt="ammo.rifle.incendiary">
+            <img src="https://irust.ru/web/items/syringe.medical.png" alt="syringe.medical">
+            <img src="https://irust.ru/web/items/largemedkit.png" alt="largemedkit">
+            <img src="https://irust.ru/web/items/ammo.rifle.hv.png" alt="ammo.rifle.hv">
+        </div>
+        <button class="rainbow-btn" data-json='[{"TargetCategory":null,"MaxAmountInOutput":1,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"metal.facemask"},{"TargetCategory":null,"MaxAmountInOutput":1,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"metal.plate.torso"},{"TargetCategory":null,"MaxAmountInOutput":1,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"roadsign.kilt"},{"TargetCategory":null,"MaxAmountInOutput":1,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"hoodie"},{"TargetCategory":null,"MaxAmountInOutput":1,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"pants"},{"TargetCategory":null,"MaxAmountInOutput":1,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"tactical.gloves"},{"TargetCategory":null,"MaxAmountInOutput":1,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"shoes.boots"},{"TargetCategory":null,"MaxAmountInOutput":1,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"rifle.ak"},{"TargetCategory":null,"MaxAmountInOutput":150,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"ammo.rifle.hv"},{"TargetCategory":null,"MaxAmountInOutput":250,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"ammo.rifle.incendiary"},{"TargetCategory":null,"MaxAmountInOutput":20,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"syringe.medical"},{"TargetCategory":null,"MaxAmountInOutput":10,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"largemedkit"}]'>📋 Копировать (json)</button>
+    </div>
+
+    <!-- КАРТОЧКА 2 -->
+    <div class="glass-card">
+        <h3>Расходники</h3>
+        <p>Чтобы применить фильтр зайдите в промышленный конвеер зажмите shift и нажмите вставить (json)</p>
+        <div class="gallery-mini">
+            <img src="https://irust.ru/web/items/cloth.png" alt="cloth">
+            <img src="https://irust.ru/web/items/leather.png" alt="leather">
+            <img src="https://irust.ru/web/items/diesel_barrel.png" alt="diesel_barrel">
+            <img src="https://irust.ru/web/items/lowgradefuel.png" alt="lowgradefuel">
+            <img src="https://irust.ru/web/items/crude.oil.png" alt="crude.oil">
+        </div>
+        <button class="rainbow-btn" data-json='[{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"cloth"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"leather"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"diesel_barrel"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"lowgradefuel"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"crude.oil"}]'>📋 Копировать (json)</button>
+    </div>
+
+    <!-- КАРТОЧКА 3 -->
+    <div class="glass-card">
+        <h3>Взрывчатка</h3>
+        <p>Чтобы применить фильтр зайдите в промышленный конвеер зажмите shift и нажмите вставить (json)</p>
+        <div class="gallery-mini">
+            <img src="https://irust.ru/web/items/ammo.rocket.basic.png" alt="ammo.rocket.basic">
+            <img src="https://irust.ru/web/items/explosive.timed.png" alt="explosive.timed">
+            <img src="https://irust.ru/web/items/ammo.rifle.explosive.png" alt="ammo.rifle.explosive">
+            <img src="https://irust.ru/web/items/explosive.satchel.png" alt="explosive.satchel">
+        </div>
+        <button class="rainbow-btn" data-json='[{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"ammo.rocket.basic"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"explosive.timed"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"ammo.rifle.explosive"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"explosive.satchel"}]'>📋 Копировать (json)</button>
+    </div>
+
+    <!-- КАРТОЧКА 4 -->
+    <div class="glass-card">
+        <h3>Ресы для взрывчатки</h3>
+        <p>Чтобы применить фильтр зайдите в промышленный конвеер зажмите shift и нажмите вставить (json)</p>
+        <div class="gallery-mini">
+            <img src="https://irust.ru/web/items/sulfur.png" alt="sulfur">
+            <img src="https://irust.ru/web/items/explosives.png" alt="explosives">
+            <img src="https://irust.ru/web/items/charcoal.png" alt="charcoal">
+            <img src="https://irust.ru/web/items/gunpowder.png" alt="gunpowder">
+        </div>
+        <button class="rainbow-btn" data-json='[{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"sulfur"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"explosives"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"charcoal"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"gunpowder"}]'>📋 Копировать (json)</button>
+    </div>
+
+    <!-- КАРТОЧКА 5 -->
+    <div class="glass-card">
+        <h3>Оружейные обвесы</h3>
+        <p>Чтобы применить фильтр зайдите в промышленный конвеер зажмите shift и нажмите вставить (json)</p>
+        <div class="gallery-mini">
+            <img src="https://irust.ru/web/items/barricade.wood.cover.png" alt="barricade.wood.cover">
+            <img src="https://irust.ru/web/items/weapon.mod.holosight.png" alt="weapon.mod.holosight">
+            <img src="https://irust.ru/web/items/weapon.mod.lasersight.png" alt="weapon.mod.lasersight">
+            <img src="https://irust.ru/web/items/weapon.mod.extendedmags.png" alt="weapon.mod.extendedmags">
+            <img src="https://irust.ru/web/items/weapon.mod.muzzleboost.png" alt="weapon.mod.muzzleboost">
+        </div>
+        <button class="rainbow-btn" data-json='[{"TargetCategory":null,"MaxAmountInOutput":10,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"barricade.wood.cover"},{"TargetCategory":null,"MaxAmountInOutput":5,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"weapon.mod.holosight"},{"TargetCategory":null,"MaxAmountInOutput":5,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"weapon.mod.lasersight"},{"TargetCategory":null,"MaxAmountInOutput":5,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"weapon.mod.extendedmags"},{"TargetCategory":null,"MaxAmountInOutput":2,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"weapon.mod.muzzleboost"}]'>📋 Копировать (json)</button>
+    </div>
+
+    <!-- КАРТОЧКА 6 -->
+    <div class="glass-card">
+        <h3>Всё для коптера</h3>
+        <p>Чтобы применить фильтр зайдите в промышленный конвеер зажмите shift и нажмите вставить (json)</p>
+        <div class="gallery-mini">
+            <img src="https://irust.ru/web/items/scrap.png" alt="scrap">
+            <img src="https://irust.ru/web/items/lowgradefuel.png" alt="lowgradefuel">
+            <img src="https://irust.ru/web/items/flare.png" alt="flare">
+        </div>
+        <button class="rainbow-btn" data-json='[{"TargetCategory":null,"MaxAmountInOutput":750,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"scrap"},{"TargetCategory":null,"MaxAmountInOutput":150,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"lowgradefuel"},{"TargetCategory":null,"MaxAmountInOutput":10,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"flare"}]'>📋 Копировать (json)</button>
+    </div>
+
+    <!-- КАРТОЧКА 7 -->
+    <div class="glass-card">
+        <h3>Карик, инструменты</h3>
+        <p>Чтобы применить фильтр зайдите в промышленный конвеер зажмите shift и нажмите вставить (json)</p>
+        <div class="gallery-mini">
+            <img src="https://irust.ru/web/items/electric.generator.small.png" alt="electric.generator.small">
+            <img src="https://irust.ru/web/items/mining.quarry.png" alt="mining.quarry">
+            <img src="https://irust.ru/web/items/surveycharge.png" alt="surveycharge">
+            <img src="https://irust.ru/web/items/pickaxe.png" alt="pickaxe">
+            <img src="https://irust.ru/web/items/hatchet.png" alt="hatchet">
+            <img src="https://irust.ru/web/items/jackhammer.png" alt="jackhammer">
+            <img src="https://irust.ru/web/items/chainsaw.png" alt="chainsaw">
+            <img src="https://irust.ru/web/items/hammer.png" alt="hammer">
+            <img src="https://irust.ru/web/items/basicblueprintfragment.png" alt="basicblueprintfragment">
+            <img src="https://irust.ru/web/items/advancedblueprintfragment.png" alt="advancedblueprintfragment">
+            <img src="https://irust.ru/web/items/building.planner.png" alt="building.planner">
+            <img src="https://irust.ru/web/items/boat.planner.png" alt="boat.planner">
+            <img src="https://irust.ru/web/items/industrial.combiner.png" alt="industrial.combiner">
+            <img src="https://irust.ru/web/items/industrial.splitter.png" alt="industrial.splitter">
+            <img src="https://irust.ru/web/items/storageadaptor.png" alt="storageadaptor">
+            <img src="https://irust.ru/web/items/industrial.conveyor.png" alt="industrial.conveyor">
+            <img src="https://irust.ru/web/items/pipetool.png" alt="pipetool">
+            <img src="https://irust.ru/web/items/wiretool.png" alt="wiretool">
+        </div>
+        <button class="rainbow-btn" data-json='[{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"electric.generator.small"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"mining.quarry"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"surveycharge"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"pickaxe"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"hatchet"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"jackhammer"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"chainsaw"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"hammer"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"basicblueprintfragment"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"advancedblueprintfragment"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"building.planner"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"boat.planner"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"industrial.combiner"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"industrial.splitter"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"storageadaptor"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"industrial.conveyor"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"pipetool"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"wiretool"}]'>📋 Копировать (json)</button>
+    </div>
+
+    <!-- КАРТОЧКА 8 -->
+    <div class="glass-card">
+        <h3>Авто локер с пяткой</h3>
+        <p>Чтобы применить фильтр зайдите в промышленный конвеер зажмите shift и нажмите вставить (json)</p>
+        <div class="gallery-mini">
+            <img src="https://irust.ru/web/items/smg.mp5.png" alt="smg.mp5">
+            <img src="https://irust.ru/web/items/ammo.pistol.fire.png" alt="ammo.pistol.fire">
+            <img src="https://irust.ru/web/items/roadsign.jacket.png" alt="roadsign.jacket">
+            <img src="https://irust.ru/web/items/shoes.boots.png" alt="shoes.boots">
+            <img src="https://irust.ru/web/items/coffeecan.helmet.png" alt="coffeecan.helmet">
+            <img src="https://irust.ru/web/items/tactical.gloves.png" alt="tactical.gloves">
+            <img src="https://irust.ru/web/items/roadsign.kilt.png" alt="roadsign.kilt">
+            <img src="https://irust.ru/web/items/largemedkit.png" alt="largemedkit">
+            <img src="https://irust.ru/web/items/syringe.medical.png" alt="syringe.medical">
+            <img src="https://irust.ru/web/items/pants.png" alt="pants">
+            <img src="https://irust.ru/web/items/hoodie.png" alt="hoodie">
+        </div>
+        <button class="rainbow-btn" data-json='[{"TargetCategory":null,"MaxAmountInOutput":1,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"smg.mp5"},{"TargetCategory":null,"MaxAmountInOutput":338,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"ammo.pistol.fire"},{"TargetCategory":null,"MaxAmountInOutput":1,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"roadsign.jacket"},{"TargetCategory":null,"MaxAmountInOutput":1,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"shoes.boots"},{"TargetCategory":null,"MaxAmountInOutput":1,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"coffeecan.helmet"},{"TargetCategory":null,"MaxAmountInOutput":1,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"tactical.gloves"},{"TargetCategory":null,"MaxAmountInOutput":1,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"roadsign.kilt"},{"TargetCategory":null,"MaxAmountInOutput":20,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"largemedkit"},{"TargetCategory":null,"MaxAmountInOutput":20,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"syringe.medical"},{"TargetCategory":null,"MaxAmountInOutput":1,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"pants"},{"TargetCategory":null,"MaxAmountInOutput":1,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"hoodie"}]'>📋 Копировать (json)</button>
+    </div>
+
+    <!-- КАРТОЧКА 9 -->
+    <div class="glass-card">
+        <h3>Гранаты</h3>
+        <p>Чтобы применить фильтр зайдите в промышленный конвеер зажмите shift и нажмите вставить (json)</p>
+        <div class="gallery-mini">
+            <img src="https://irust.ru/web/items/grenade.f1.png" alt="grenade.f1">
+            <img src="https://irust.ru/web/items/grenade.beancan.png" alt="grenade.beancan">
+            <img src="https://irust.ru/web/items/grenade.flashbang.png" alt="grenade.flashbang">
+            <img src="https://irust.ru/web/items/grenade.smoke.png" alt="grenade.smoke">
+        </div>
+        <button class="rainbow-btn" data-json='[{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"grenade.f1"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"grenade.beancan"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"grenade.flashbang"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"grenade.smoke"}]'>📋 Копировать (json)</button>
+    </div>
+
+    <!-- КАРТОЧКА 10 -->
+    <div class="glass-card">
+        <h3>Обвесы на оружие</h3>
+        <p>Чтобы применить фильтр зайдите в промышленный конвеер зажмите shift и нажмите вставить (json)</p>
+        <div class="gallery-mini">
+            <img src="https://irust.ru/web/items/weapon.mod.small.scope.png" alt="weapon.mod.small.scope">
+            <img src="https://irust.ru/web/items/weapon.mod.lasersight.png" alt="weapon.mod.lasersight">
+            <img src="https://irust.ru/web/items/weapon.mod.holosight.png" alt="weapon.mod.holosight">
+            <img src="https://irust.ru/web/items/weapon.mod.8x.scope.png" alt="weapon.mod.8x.scope">
+            <img src="https://irust.ru/web/items/weapon.mod.extendedmags.png" alt="weapon.mod.extendedmags">
+            <img src="https://irust.ru/web/items/weapon.mod.muzzleboost.png" alt="weapon.mod.muzzleboost">
+        </div>
+        <button class="rainbow-btn" data-json='[{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"weapon.mod.small.scope"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"weapon.mod.lasersight"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"weapon.mod.holosight"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"weapon.mod.8x.scope"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"weapon.mod.extendedmags"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"weapon.mod.muzzleboost"}]'>📋 Копировать (json)</button>
+    </div>
+
+    <!-- КАРТОЧКА 11 -->
+    <div class="glass-card">
+        <h3>Патроны</h3>
+        <p>Чтобы применить фильтр зайдите в промышленный конвеер зажмите shift и нажмите вставить (json)</p>
+        <div class="gallery-mini">
+            <img src="https://irust.ru/web/items/ammo.rifle.png" alt="ammo.rifle">
+            <img src="https://irust.ru/web/items/ammo.rifle.explosive.png" alt="ammo.rifle.explosive">
+            <img src="https://irust.ru/web/items/ammo.rifle.hv.png" alt="ammo.rifle.hv">
+            <img src="https://irust.ru/web/items/ammo.rifle.incendiary.png" alt="ammo.rifle.incendiary">
+            <img src="https://irust.ru/web/items/ammo.pistol.png" alt="ammo.pistol">
+            <img src="https://irust.ru/web/items/ammo.pistol.hv.png" alt="ammo.pistol.hv">
+            <img src="https://irust.ru/web/items/ammo.pistol.fire.png" alt="ammo.pistol.fire">
+            <img src="https://irust.ru/web/items/ammo.shotgun.png" alt="ammo.shotgun">
+            <img src="https://irust.ru/web/items/ammo.shotgun.slug.png" alt="ammo.shotgun.slug">
+            <img src="https://irust.ru/web/items/ammo.shotgun.fire.png" alt="ammo.shotgun.fire">
+            <img src="https://irust.ru/web/items/ammo.handmade.shell.png" alt="ammo.handmade.shell">
+        </div>
+        <button class="rainbow-btn" data-json='[{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"ammo.rifle"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"ammo.rifle.explosive"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"ammo.rifle.hv"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"ammo.rifle.incendiary"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"ammo.pistol"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"ammo.pistol.hv"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"ammo.pistol.fire"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"ammo.shotgun"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"ammo.shotgun.slug"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"ammo.shotgun.fire"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"ammo.handmade.shell"}]'>📋 Копировать (json)</button>
+    </div>
+
+    <!-- КАРТОЧКА 12 -->
+    <div class="glass-card">
+        <h3>Компоненты</h3>
+        <p>Чтобы применить фильтр зайдите в промышленный конвеер, зажмите shift и нажмите вставить (json)</p>
+        <div class="gallery-mini">
+            <img src="https://irust.ru/web/items/gears.png" alt="gears">
+            <img src="https://irust.ru/web/items/targeting.computer.png" alt="targeting.computer">
+            <img src="https://irust.ru/web/items/cctv.camera.png" alt="cctv.camera">
+            <img src="https://irust.ru/web/items/supply.signal.png" alt="supply.signal">
+        </div>
+        <button class="rainbow-btn" data-json='[
+  {"TargetCategory":13,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":""},
+  {"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"targeting.computer"},
+  {"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"cctv.camera"},
+  {"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"supply.signal"}
+]'>📋 Копировать (json)</button>
+    </div>
+
+    <!-- КАРТОЧКА 13 -->
+    <div class="glass-card">
+        <h3>Камни и дерево</h3>
+        <p>Чтобы применить фильтр зайдите в промышленный конвеер, зажмите shift и нажмите вставить (json)</p>
+        <div class="gallery-mini">
+            <img src="https://irust.ru/web/items/stones.png" alt="stones">
+            <img src="https://irust.ru/web/items/wood.png" alt="wood">
+        </div>
+        <button class="rainbow-btn" data-json='[{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"stones"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"wood"}]'>📋 Копировать (json)</button>
+    </div>
+
+    <!-- КАРТОЧКА 14 -->
+    <div class="glass-card">
+        <h3>Метал и мвк</h3>
+        <p>Чтобы применить фильтр зайдите в промышленный конвеер, зажмите shift и нажмите вставить (json)</p>
+        <div class="gallery-mini">
+            <img src="https://irust.ru/web/items/metal.fragments.png" alt="metal.fragments">
+            <img src="https://irust.ru/web/items/metal.refined.png" alt="metal.refined">
+        </div>
+        <button class="rainbow-btn" data-json='[{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"metal.fragments"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"metal.refined"}]'>📋 Копировать (json)</button>
+    </div>
+
+    <!-- КАРТОЧКА 15 -->
+    <div class="glass-card">
+        <h3>Оружие</h3>
+        <p>Чтобы применить фильтр зайдите в промышленный конвеер, зажмите shift и нажмите вставить (json)</p>
+        <div class="gallery-mini">
+            <img src="https://irust.ru/web/items/rifle.ak.png" alt="rifle.ak">
+            <img src="https://irust.ru/web/items/smg.mp5.png" alt="smg.mp5">
+            <img src="https://irust.ru/web/items/rifle.l96.png" alt="rifle.l96">
+            <img src="https://irust.ru/web/items/lmg.m249.png" alt="lmg.m249">
+            <img src="https://irust.ru/web/items/hmlmg.png" alt="hmlmg">
+            <img src="https://irust.ru/web/items/minigun.png" alt="minigun">
+            <img src="https://irust.ru/web/items/shotgun.m4.png" alt="shotgun.m4">
+            <img src="https://irust.ru/web/items/homingmissile.launcher.png" alt="homingmissile.launcher">
+        </div>
+        <button class="rainbow-btn" data-json='[{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"rifle.ak"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"smg.mp5"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"rifle.l96"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"lmg.m249"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"hmlmg"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"minigun"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"shotgun.m4"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"homingmissile.launcher"}]'>📋 Копировать (json)</button>
+    </div>
+
+    <!-- КАРТОЧКА 16 -->
+    <div class="glass-card">
+        <h3>Гранатомёты и ракетница</h3>
+        <p>Чтобы применить фильтр зайдите в промышленный конвеер, зажмите shift и нажмите вставить (json)</p>
+        <div class="gallery-mini">
+            <img src="https://irust.ru/web/items/ammo.grenadelauncher.he.png" alt="ammo.grenadelauncher.he">
+            <img src="https://irust.ru/web/items/multiplegrenadelauncher.png" alt="multiplegrenadelauncher">
+            <img src="https://irust.ru/web/items/rocket.launcher.png" alt="rocket.launcher">
+        </div>
+        <button class="rainbow-btn" data-json='[{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"ammo.grenadelauncher.he"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"multiplegrenadelauncher"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"rocket.launcher"}]'>📋 Копировать (json)</button>
+    </div>
+
+    <!-- КАРТОЧКА 17 -->
+    <div class="glass-card">
+        <h3>Автотурель, ПВО и MLRS</h3>
+        <p>Чтобы применить фильтр зайдите в промышленный конвеер, зажмите shift и нажмите вставить (json)</p>
+        <div class="gallery-mini">
+            <img src="https://irust.ru/web/items/autoturret.png" alt="autoturret">
+            <img src="https://irust.ru/web/items/samsite.png" alt="samsite">
+            <img src="https://irust.ru/web/items/aiming.module.mlrs.png" alt="aiming.module.mlrs">
+            <img src="https://irust.ru/web/items/ammo.rocket.mlrs.png" alt="ammo.rocket.mlrs">
+        </div>
+        <button class="rainbow-btn" data-json='[{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"autoturret"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"samsite"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"aiming.module.mlrs"},{"TargetCategory":null,"MaxAmountInOutput":0,"BufferAmount":0,"MinAmountInInput":0,"IsBlueprint":false,"TargetItemName":"ammo.rocket.mlrs"}]'>📋 Копировать (json)</button>
+    </div>
+</div>
+
+<div id="toast" class="toast">Скопировано!</div>
+
+<script>
+    // 1. Удаляем все лишние toast (их уже нет в HTML, кроме одного)
+    // 2. Добавляем счётчик предметов и tooltips
+    function enhanceCards() {
+        const cards = document.querySelectorAll('.glass-card');
+        cards.forEach(card => {
+            // Счётчик предметов (количество изображений в .gallery-mini)
+            const gallery = card.querySelector('.gallery-mini');
+            if (gallery) {
+                const itemCount = gallery.querySelectorAll('img').length;
+                const countDiv = document.createElement('div');
+                countDiv.className = 'item-count';
+                countDiv.innerText = ` ${itemCount} предметов`;
+                // Вставляем перед кнопкой, но не дублируем
+                if (!card.querySelector('.item-count')) {
+                    const btn = card.querySelector('.rainbow-btn');
+                    if (btn) card.insertBefore(countDiv, btn);
+                }
+            }
+            // Всплывающие подсказки (title) для всех img в галерее
+            const images = card.querySelectorAll('.gallery-mini img');
+            images.forEach(img => {
+                const alt = img.getAttribute('alt');
+                if (alt && !img.hasAttribute('title')) {
+                    img.setAttribute('title', alt);
+                }
+            });
+        });
+    }
+
+    // 3. Поиск по карточкам
+    function initSearch() {
+        const searchInput = document.getElementById('searchInput');
+        if (!searchInput) return;
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            const cards = document.querySelectorAll('.glass-card');
+            cards.forEach(card => {
+                const title = card.querySelector('h3')?.innerText.toLowerCase() || '';
+                const desc = card.querySelector('p')?.innerText.toLowerCase() || '';
+                if (query === '' || title.includes(query) || desc.includes(query)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    // 4. Обработка копирования (существующий скрипт с поддержкой data-json и data-copy)
+    function initCopyButtons() {
+        document.querySelectorAll('.rainbow-btn').forEach(btn => {
+            // Убираем старые обработчики, чтобы не дублировать
+            btn.removeEventListener('click', window.copyHandler);
+            const handler = () => {
+                let text = btn.getAttribute('data-json');
+                if (!text) text = btn.getAttribute('data-copy');
+                if (text) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        const toast = document.getElementById('toast');
+                        if (toast) {
+                            toast.style.opacity = '1';
+                            setTimeout(() => toast.style.opacity = '0', 1500);
+                        }
+                    }).catch(() => alert('Не удалось скопировать'));
+                }
+            };
+            btn.addEventListener('click', handler);
+            btn.copyHandler = handler; // сохраняем для возможного удаления
+        });
+    }
+
+    // Запуск всех улучшений после загрузки DOM
+    document.addEventListener('DOMContentLoaded', () => {
+        enhanceCards();
+        initSearch();
+        initCopyButtons();
+    });
+</script>
+</body>
+</html>
